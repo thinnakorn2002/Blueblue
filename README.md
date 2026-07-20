@@ -55,7 +55,7 @@ apt --fix-missing update && apt update && apt upgrade -y && apt install -y bzip2
   ```
 IPV6 enable
 ```html
-apt --fix-missing update && apt update && apt upgrade -y && apt install -y bzip2 gzip coreutils screen dpkg wget vim curl nano zip unzip && wget -q https://raw.githubusercontent.com/NevermoreSSH/Blueblue/main/setup2.sh && chmod +x setup2.sh && screen -S setup ./setup2.sh
+apt --fix-missing update && apt update && apt upgrade -y && apt install -y bzip2 gzip coreutils screen dpkg wget vim curl nano zip unzip && wget -q https://raw.githubusercontent.com/thinnakorn2002/Blueblue/main/setup2.sh && chmod +x setup2.sh && screen -S setup ./setup2.sh
   ```
 <b>
 
