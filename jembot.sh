@@ -1,4 +1,7 @@
 #!/bin/bash
+# My Telegram : https://t.me/zerossl
+# ==========================================
+# Color
 BIBlack='\033[1;90m'      # Black
 BIRed='\033[1;91m'        # Red
 BIGreen='\033[1;92m'      # Green
@@ -57,16 +60,11 @@ if [ "${EUID}" -ne 0 ]; then
 		exit 1
 fi
 
-# // Exporting IP Address
-export IP=$( curl -s https://ipinfo.io/ip/ )
-IP=$(curl -s ipinfo.io/ip )
-IP=$(curl -sS ipv4.icanhazip.com)
-IP=$(curl -sS ifconfig.me )
+# // Exporting IP Address (รองรับทั้ง IPv6 และ IPv4)
+export IP=$( curl -6 -s https://ifconfig.me/ip || curl -s https://ipinfo.io/ip )
 
-# // Exporting Network Interface
-export NETWORK_IFACE="$(ip route show to default | awk '{print $5}')"
-
-
+# // Exporting Network Interface (ดึงชื่อการ์ดแลนหลักของเครื่อง)
+export NETWORK_IFACE="$(ip route show to default | awk '{print $5}' | head -n 1)"
 
 red='\e[1;31m'
 green='\e[1;32m'
@@ -88,17 +86,31 @@ echo "Jembot"
 echo "Progress..."
 sleep 2
 
-/etc/init.d/vnstat restart >/dev/null 2>&1
+# สั่งหยุดบริการเก่าก่อนเริ่มทำระบบใหม่
+systemctl stop vnstat >/dev/null 2>&1
+/etc/init.d/vnstat stop >/dev/null 2>&1
+
+# เริ่มดาวน์โหลดซอร์สโค้ด vnStat 2.6
 wget -q https://github.com/NevermoreSSH/vnstat/releases/download/vnstat/vnstat-2.6.tar.gz
 tar zxvf vnstat-2.6.tar.gz
 cd vnstat-2.6
+
+# คอมไพล์และติดตั้ง
 ./configure --prefix=/usr --sysconfdir=/etc >/dev/null 2>&1 && make >/dev/null 2>&1 && make install >/dev/null 2>&1
 cd
-vnstat -u -i $NET
-sed -i 's/Interface "'""eth0""'"/Interface "'""$NET""'"/g' /etc/vnstat.conf
+
+# แก้ไขบั๊ก: ส่งค่านามเรียกขานของการ์ดแลนจริง ๆ ($NETWORK_IFACE) แทนตัวแปรว่าง
+vnstat -u -i $NETWORK_IFACE
+sed -i "s/Interface \"eth0\"/Interface \"$NETWORK_IFACE\"/g" /etc/vnstat.conf
+
+# กำหนดสิทธิ์และปลุกเซิร์ฟวิส vnStat ให้ทำงาน
 chown vnstat:vnstat /var/lib/vnstat -R
+systemctl daemon-reload
 systemctl enable vnstat >/dev/null 2>&1
+systemctl start vnstat >/dev/null 2>&1
 /etc/init.d/vnstat restart >/dev/null 2>&1
+
+# ล้างไฟล์ขยะจากการคอมไพล์ออกเพื่อความสะอาด
 rm -f /root/vnstat-2.6.tar.gz >/dev/null 2>&1
 rm -rf /root/vnstat-2.6 >/dev/null 2>&1
 
